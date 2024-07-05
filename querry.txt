@@ -1,0 +1,171 @@
+SELECT DATE_FORMAT(FROM_UNIXTIME(`timecreated`), '%Y-%m-%d') AS 'date_formatted', COUNT(*) AS 'count'
+FROM `mdl_logstore_standard_log`
+WHERE (((SUBSTRING_INDEX(SUBSTRING_INDEX(`other`, ':"', -2), '";', 1) LIKE '%admin%')
+        OR JSON_VALID(`other`) = 1 AND JSON_EXTRACT(`other`, '$.username') LIKE '%admin%'))
+      AND (FROM_UNIXTIME(`timecreated`) >= '2023-07-01'
+           AND FROM_UNIXTIME(`timecreated`) <= DATE_ADD(CURDATE(), INTERVAL 1 DAY))
+GROUP BY DATE_FORMAT(FROM_UNIXTIME(`timecreated`), '%Y-%m-%d')
+ORDER BY `date_formatted`;
+
+SELECT DATE_FORMAT(FROM_UNIXTIME(`timecreated`), '%Y-%m-%d %H:00:00') AS 'date_hour_formatted', COUNT(*) AS 'count'
+FROM `mdl_logstore_standard_log`
+WHERE ((SUBSTRING_INDEX(SUBSTRING_INDEX(`other`, ':"', -2), '";', 1) LIKE '%admin%')
+       OR JSON_VALID(`other`) = 1 AND JSON_EXTRACT(`other`, '$.username') LIKE '%admin%')
+       AND FROM_UNIXTIME(`timecreated`) >= CURDATE()
+       AND HOUR(FROM_UNIXTIME(`timecreated`)) = HOUR(NOW())
+GROUP BY DATE_FORMAT(FROM_UNIXTIME(`timecreated`), '%Y-%m-%d %H:00:00')
+ORDER BY `date_hour_formatted`;
+
+SELECT DATE_FORMAT(FROM_UNIXTIME(`timecreated`), '%Y-%m-%d %H:00:00') AS 'date_hour_formatted', COUNT(*) AS 'count'
+FROM `mdl_logstore_standard_log`
+WHERE ((SUBSTRING_INDEX(SUBSTRING_INDEX(`other`, ':"', -2), '";', 1) LIKE '%admin%')
+       OR JSON_VALID(`other`) = 1 AND JSON_EXTRACT(`other`, '$.username') LIKE '%admin%')
+       AND FROM_UNIXTIME(`timecreated`) >= CURDATE()
+       AND HOUR(FROM_UNIXTIME(`timecreated`)) BETWEEN 0 AND 23
+GROUP BY DATE_FORMAT(FROM_UNIXTIME(`timecreated`), '%Y-%m-%d %H:00:00')
+ORDER BY `date_hour_formatted`;
+
+
+
+
+SET @date:=CURDATE();
+SELECT DATE_FORMAT(FROM_UNIXTIME(`timecreated`), '%Y-%m-%d') AS 'date_formatted', COUNT(*) AS 'count'
+			FROM `mdl_logstore_standard_log`
+			WHERE (((SUBSTRING_INDEX(SUBSTRING_INDEX(`other`, ':', -2), ';', 1) LIKE '%admin%')
+					OR JSON_VALID(`other`) = 1 AND JSON_EXTRACT(`other`, '$.username') LIKE '%admin%'))
+				  AND (FROM_UNIXTIME(`timecreated`) >= DATE_SUB(@date, INTERVAL DAYOFMONTH(@date)-1 DAY)
+					   AND FROM_UNIXTIME(`timecreated`) <= DATE_ADD(CURDATE(), INTERVAL 1 DAY))
+			GROUP BY DATE_FORMAT(FROM_UNIXTIME(`timecreated`), '%Y-%m-%d')
+			ORDER BY `date_formatted`;
+			
+			
+			
+			
+			
+			SELECT DATE_FORMAT(FROM_UNIXTIME(`timecreated`), '%Y-%m-%d %H:00:00') AS 'date_hour_formatted', COUNT(*) AS 'count'
+FROM `mdl_logstore_standard_log`
+WHERE ((SUBSTRING_INDEX(SUBSTRING_INDEX(`other`, ':"', -2), '";', 1) LIKE '%admin%')
+       OR JSON_VALID(`other`) = 1 AND JSON_EXTRACT(`other`, '$.username') LIKE '%admin%')
+       AND FROM_UNIXTIME(`timecreated`) >= CURDATE()
+       AND HOUR(FROM_UNIXTIME(`timecreated`)) BETWEEN 0 AND 23
+GROUP BY DATE_FORMAT(FROM_UNIXTIME(`timecreated`), '%Y-%m-%d %H:00:00')
+ORDER BY `date_hour_formatted`;
+ 
+SELECT DATE_FORMAT(FROM_UNIXTIME(`timecreated`), '%Y-%m-%d') AS 'date_formatted', COUNT(*) AS 'count'
+			FROM `mdl_logstore_standard_log`
+			WHERE (((SUBSTRING_INDEX(SUBSTRING_INDEX(`other`, ':', -2), ';', 1) LIKE '%admin%')
+					OR JSON_VALID(`other`) = 1 AND JSON_EXTRACT(`other`, '$.username') LIKE '%admin%'))
+				  AND (FROM_UNIXTIME(`timecreated`) >= DATE_SUB(CURDATE(), INTERVAL DAYOFMONTH(CURDATE())-1 DAY)
+					   AND FROM_UNIXTIME(`timecreated`) <= DATE_ADD(CURDATE(), INTERVAL 1 DAY))
+			GROUP BY DATE_FORMAT(FROM_UNIXTIME(`timecreated`), '%Y-%m-%d')
+			ORDER BY `date_formatted`;
+
+SELECT DATE_FORMAT(FROM_UNIXTIME(`timecreated`), '%Y-%m') AS date_month_formatted, COUNT(*) AS `count`
+FROM mdl_logstore_standard_log
+WHERE ((SUBSTRING_INDEX(SUBSTRING_INDEX(`other`, ':', -2), ';', 1) LIKE '%admin%')
+       OR JSON_VALID(`other`) = 1 AND JSON_EXTRACT(`other`, '$.username') LIKE '%admin%')
+      AND YEAR(FROM_UNIXTIME(`timecreated`)) = YEAR(CURDATE())
+      AND MONTH(FROM_UNIXTIME(`timecreated`)) <= MONTH(CURDATE())
+GROUP BY DATE_FORMAT(FROM_UNIXTIME(`timecreated`), '%Y-%m')
+ORDER BY date_month_formatted;
+
+
+//week wise data querry 
+ 
+SELECT
+  CONCAT(DATE_FORMAT(FROM_UNIXTIME(`timecreated`), '%Y-%m-%d'), ' - ', DATE_FORMAT(DATE_ADD(FROM_UNIXTIME(`timecreated`), INTERVAL 6-DAYOFWEEK(FROM_UNIXTIME(`timecreated`))) , '%Y-%m-%d')) AS 'week_range',
+  COUNT(*) AS 'count'
+FROM `mdl_logstore_standard_log` 
+WHERE (
+    (SUBSTRING_INDEX(SUBSTRING_INDEX(`other`, ':', -2), ';', 1) LIKE '%admin%')
+    OR
+    (JSON_VALID(`other`) = 1 AND JSON_EXTRACT(`other`, '$.username') LIKE '%admin%')
+  )
+  AND DAYOFWEEK(FROM_UNIXTIME(`timecreated`)) BETWEEN 2 AND 7 -- Filter for days from Monday to Saturday
+  AND FROM_UNIXTIME(`timecreated`) >= DATE_SUB(CURDATE(), INTERVAL DAYOFMONTH(CURDATE())-1 DAY)
+  AND FROM_UNIXTIME(`timecreated`) < DATE_ADD(DATE_SUB(CURDATE(), INTERVAL DAYOFMONTH(CURDATE())-1 DAY), INTERVAL 1 MONTH) -- Adjusted date range for the whole month
+GROUP BY CONCAT(DATE_FORMAT(FROM_UNIXTIME(`timecreated`), '%Y-%m-%d'), ' - ', DATE_FORMAT(DATE_ADD(FROM_UNIXTIME(`timecreated`), INTERVAL 6-DAYOFWEEK(FROM_UNIXTIME(`timecreated`))) , '%Y-%m-%d'))
+ORDER BY `week_range`;
+
+
+SELECT *
+FROM `mdl_logstore_standard_log`
+WHERE (((SUBSTRING_INDEX(SUBSTRING_INDEX(`other`, ':"', -2), '";', 1) LIKE '%f2023%')
+		OR (SUBSTRING_INDEX(SUBSTRING_INDEX(`other`, ':"', -2), '";', 1) LIKE '%f2021%')
+		OR (SUBSTRING_INDEX(SUBSTRING_INDEX(`other`, ':"', -2), '";', 1) LIKE '%s2023%')
+		OR (SUBSTRING_INDEX(SUBSTRING_INDEX(`other`, ':"', -2), '";', 1) LIKE '%S2016%')
+
+        OR JSON_VALID(`other`) = 1 AND JSON_EXTRACT(`other`, '$.username') LIKE '%f2023%'
+		OR JSON_VALID(`other`) = 1 AND JSON_EXTRACT(`other`, '$.username') LIKE '%f2021%')
+        OR JSON_VALID(`other`) = 1 AND JSON_EXTRACT(`other`, '$.username') LIKE '%s2023%'
+        OR JSON_VALID(`other`) = 1 AND JSON_EXTRACT(`other`, '$.username') LIKE '%S2016%'
+		)
+		
+		
+		
+		
+		SELECT *
+FROM `mdl_logstore_standard_log`
+WHERE (((SUBSTRING_INDEX(SUBSTRING_INDEX(`other`, ':"', -2), '";', 1) LIKE '%f2023%')
+		OR (SUBSTRING_INDEX(SUBSTRING_INDEX(`other`, ':"', -2), '";', 1) LIKE '%f2021%')
+		OR (SUBSTRING_INDEX(SUBSTRING_INDEX(`other`, ':"', -2), '";', 1) LIKE '%s2023%')
+		OR (SUBSTRING_INDEX(SUBSTRING_INDEX(`other`, ':"', -2), '";', 1) LIKE '%S2016%')
+
+        OR JSON_VALID(`other`) = 1 AND JSON_EXTRACT(`other`, '$.username') LIKE '%f2023%'
+		OR JSON_VALID(`other`) = 1 AND JSON_EXTRACT(`other`, '$.username') LIKE '%f2021%'
+        OR JSON_VALID(`other`) = 1 AND JSON_EXTRACT(`other`, '$.username') LIKE '%s2023%'
+        OR JSON_VALID(`other`) = 1 AND JSON_EXTRACT(`other`, '$.username') LIKE '%S2016%')
+		) AND `action` = 'loggedin'
+		
+		
+		
+		
+		SELECT 
+    CASE
+        WHEN SUBSTRING_INDEX(SUBSTRING_INDEX(`other`, ':"', -2), '";', 1) LIKE '%s2013%' THEN 's2013'
+        WHEN SUBSTRING_INDEX(SUBSTRING_INDEX(`other`, ':"', -2), '";', 1) LIKE '%f2023%' THEN 'f2023'
+        WHEN SUBSTRING_INDEX(SUBSTRING_INDEX(`other`, ':"', -2), '";', 1) LIKE '%s2023%' THEN 's2023'
+        WHEN SUBSTRING_INDEX(SUBSTRING_INDEX(`other`, ':"', -2), '";', 1) LIKE '%f2021%' THEN 'f2021'
+    END AS 'match_string',
+    COUNT(*) AS 'count'
+FROM `mdl_logstore_standard_log`
+WHERE (
+    (SUBSTRING_INDEX(SUBSTRING_INDEX(`other`, ':"', -2), '";', 1) LIKE '%f2023%')
+    OR (SUBSTRING_INDEX(SUBSTRING_INDEX(`other`, ':"', -2), '";', 1) LIKE '%f2021%')
+    OR (SUBSTRING_INDEX(SUBSTRING_INDEX(`other`, ':"', -2), '";', 1) LIKE '%s2023%')
+    OR (SUBSTRING_INDEX(SUBSTRING_INDEX(`other`, ':"', -2), '";', 1) LIKE '%s2021%')
+    OR (JSON_VALID(`other`) = 1 AND JSON_EXTRACT(`other`, '$.username') LIKE '%f2023%')
+    OR (JSON_VALID(`other`) = 1 AND JSON_EXTRACT(`other`, '$.username') LIKE '%f2021%')
+    OR (JSON_VALID(`other`) = 1 AND JSON_EXTRACT(`other`, '$.username') LIKE '%s2023%')
+  )
+  AND `action` = 'loggedin'
+GROUP BY `match_string`;
+
+
+
+SELECT 
+    CASE
+        WHEN SUBSTRING_INDEX(SUBSTRING_INDEX(`other`, ':"', -2), '";', 1) LIKE '%s2016%' THEN 's2016'
+        WHEN SUBSTRING_INDEX(SUBSTRING_INDEX(`other`, ':"', -2), '";', 1) LIKE '%f2021%' THEN 'f2021'
+        WHEN SUBSTRING_INDEX(SUBSTRING_INDEX(`other`, ':"', -2), '";', 1) LIKE '%s2021%' THEN 's2021'
+        WHEN SUBSTRING_INDEX(SUBSTRING_INDEX(`other`, ':"', -2), '";', 1) LIKE '%f2023%' THEN 'f2023'
+        WHEN SUBSTRING_INDEX(SUBSTRING_INDEX(`other`, ':"', -2), '";', 1) LIKE '%s2023%' THEN 's2023'
+    END AS 'match_string',
+    COUNT(*) AS 'count'
+FROM `mdl_logstore_standard_log`
+WHERE (
+    (SUBSTRING_INDEX(SUBSTRING_INDEX(`other`, ':"', -2), '";', 1) LIKE '%s2016%')
+    OR (SUBSTRING_INDEX(SUBSTRING_INDEX(`other`, ':"', -2), '";', 1) LIKE '%f2021%')
+    OR (SUBSTRING_INDEX(SUBSTRING_INDEX(`other`, ':"', -2), '";', 1) LIKE '%s2021%')
+    OR (SUBSTRING_INDEX(SUBSTRING_INDEX(`other`, ':"', -2), '";', 1) LIKE '%f2023%')
+    OR (SUBSTRING_INDEX(SUBSTRING_INDEX(`other`, ':"', -2), '";', 1) LIKE '%s2023%')
+ 
+    OR (JSON_VALID(`other`) = 1 AND JSON_EXTRACT(`other`, '$.username') LIKE '%s2016%')
+    OR (JSON_VALID(`other`) = 1 AND JSON_EXTRACT(`other`, '$.username') LIKE '%f2021%')
+    OR (JSON_VALID(`other`) = 1 AND JSON_EXTRACT(`other`, '$.username') LIKE '%s2021%')
+    OR (JSON_VALID(`other`) = 1 AND JSON_EXTRACT(`other`, '$.username') LIKE '%f2023%')
+    OR (JSON_VALID(`other`) = 1 AND JSON_EXTRACT(`other`, '$.username') LIKE '%s2023%')
+  )
+  AND `action` = 'loggedin'
+GROUP BY `match_string`;
+
